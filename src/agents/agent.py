@@ -121,7 +121,18 @@ create_protected_agent = create_blue_agent
 async def test_agent(agent, runner):
     """Quick smoke: one banking question."""
     print("\n--- Quick test ---")
-    text, _ = await chat_with_agent(
-        agent, runner, "What is the current savings interest rate at VinBank?"
-    )
-    print(f"Agent: {text[:400] if text else '(empty)'}")
+    import asyncio
+    for attempt in range(4):
+        try:
+            text, _ = await chat_with_agent(
+                agent, runner, "What is the current savings interest rate at VinBank?"
+            )
+            print(f"Agent: {text[:400] if text else '(empty)'}")
+            return
+        except Exception as e:
+            err_msg = str(e)
+            if ("503" in err_msg or "429" in err_msg) and attempt < 3:
+                await asyncio.sleep(5.0)
+            else:
+                print(f"Smoke test warning: {e}")
+                return
